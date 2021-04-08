@@ -17,8 +17,6 @@ local function filename(options)
     end
     if data == '' then
       data = '[No Name]'
-    elseif vim.fn.winwidth(0) <= 84 or #data > 40 then
-      data = vim.fn.pathshorten(data)
     end
 
     if options.file_status then
