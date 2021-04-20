@@ -5,16 +5,23 @@ local utils_colors = require 'lualine.utils.cterm_colors'
 local utils = require 'lualine.utils.utils'
 local section_highlight_map = {x = 'c', y = 'b', z = 'a'}
 local active_theme = nil
+local cterm_colors = false
 
 function M.highlight(name, foreground, background, gui, reload)
   local command = {'highlight', name}
   if foreground and foreground ~= 'none' then
-    table.insert(command, 'ctermfg=' .. utils_colors.get_cterm_color(foreground))
     table.insert(command, 'guifg=' .. foreground)
+    if cterm_colors then
+      table.insert(command,
+                   'ctermfg=' .. utils_colors.get_cterm_color(foreground))
+    end
   end
   if background and background ~= 'none' then
-    table.insert(command, 'ctermbg=' .. utils_colors.get_cterm_color(background))
     table.insert(command, 'guibg=' .. background)
+    if cterm_colors then
+      table.insert(command,
+                   'ctermbg=' .. utils_colors.get_cterm_color(background))
+    end
   end
   if gui then
     table.insert(command, 'cterm=' .. gui)
@@ -29,6 +36,7 @@ end
 function M.create_highlight_groups(theme)
   utils.clear_highlights()
   active_theme = theme
+  cterm_colors = not vim.o.termguicolors
   for mode, sections in pairs(theme) do
     for section, colorscheme in pairs(sections) do
       local highlight_group_name = {'lualine', section, mode}
@@ -42,7 +50,7 @@ end
 -- @param highlight_group:(string) name of highlight group
 -- @return: (string) highlight group name with mode
 local function append_mode(highlight_group)
-  local mode = require('lualine.components.mode')()
+  local mode = require('lualine.utils.mode').get_mode()
   if mode == 'VISUAL' or mode == 'V-BLOCK' or mode == 'V-LINE' or mode ==
       'SELECT' or mode == 'S-LINE' or mode == 'S-BLOCK' then
     highlight_group = highlight_group .. '_visual'
@@ -135,7 +143,7 @@ function M.format_highlight(is_focused, highlight_group)
                           section_highlight_map[highlight_group:match(
                               'lualine_(.)')]
   end
-  local highlight_name = highlight_group
+  local highlight_name
   if not is_focused then
     highlight_name = highlight_group .. [[_inactive]]
   else
@@ -159,7 +167,7 @@ function M.get_transitional_highlights(left_section_data, right_section_data,
   -- Grab the last highlighter of left section
   if left_section_data then
     -- extract highlight_name from .....%#highlight_name#
-    left_highlight_name = left_section_data:match('.*%%#(.*)#')
+    left_highlight_name = left_section_data:match('.*%%#(.-)#')
   else
     -- When right section us unavailable default to lualine_c
     left_highlight_name = append_mode('lualine_c')
@@ -168,10 +176,8 @@ function M.get_transitional_highlights(left_section_data, right_section_data,
     end
   end
   if right_section_data then
-    -- using vim-regex cause lua-paterns don't have non-greedy matching
     -- extract highlight_name from %#highlight_name#....
-    right_highlight_name = vim.fn.matchlist(right_section_data,
-                                            [[%#\(.\{-\}\)#]])[2]
+    right_highlight_name = right_section_data:match('%%#(.-)#.*')
   else
     -- When right section us unavailable default to lualine_c
     right_highlight_name = append_mode('lualine_c')
@@ -195,8 +201,8 @@ function M.get_transitional_highlights(left_section_data, right_section_data,
     -- Create the highlight_group if needed
     -- Get colors from highlights
     -- using string.format to convert decimal to hexadecimal
-    local fg = utils.extract_highlight_colors(left_highlight_name, 'guibg')
-    local bg = utils.extract_highlight_colors(right_highlight_name, 'guibg')
+    local fg = utils.extract_highlight_colors(left_highlight_name, 'bg')
+    local bg = utils.extract_highlight_colors(right_highlight_name, 'bg')
     if not fg then fg = 'none' end
     if not bg then bg = 'none' end
     -- swap the bg and fg when reverse is true. As in that case highlight will
