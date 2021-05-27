@@ -1,11 +1,10 @@
 -- Copyright (c) 2020-2021 hoob3rt
 -- MIT license, see LICENSE for more details.
 local M = {}
-local utils_colors = require 'lualine.utils.cterm_colors'
+local cterm_colors
 local utils = require 'lualine.utils.utils'
 local section_highlight_map = {x = 'c', y = 'b', z = 'a'}
 local active_theme = nil
-local cterm_colors = false
 
 function M.highlight(name, foreground, background, gui, reload)
   local command = {'highlight', name}
@@ -13,14 +12,14 @@ function M.highlight(name, foreground, background, gui, reload)
     table.insert(command, 'guifg=' .. foreground)
     if cterm_colors then
       table.insert(command,
-                   'ctermfg=' .. utils_colors.get_cterm_color(foreground))
+                   'ctermfg=' .. cterm_colors.get_cterm_color(foreground))
     end
   end
   if background and background ~= 'none' then
     table.insert(command, 'guibg=' .. background)
     if cterm_colors then
       table.insert(command,
-                   'ctermbg=' .. utils_colors.get_cterm_color(background))
+                   'ctermbg=' .. cterm_colors.get_cterm_color(background))
     end
   end
   if gui then
@@ -36,7 +35,9 @@ end
 function M.create_highlight_groups(theme)
   utils.clear_highlights()
   active_theme = theme
-  cterm_colors = not vim.o.termguicolors
+  if not vim.o.termguicolors then
+    cterm_colors = require 'lualine.utils.cterm_colors'
+  end
   for mode, sections in pairs(theme) do
     for section, colorscheme in pairs(sections) do
       local highlight_group_name = {'lualine', section, mode}
@@ -94,7 +95,8 @@ function M.create_component_highlight_group(color, highlight_tag, options)
   local normal_hl
   -- convert lualine_a -> a before setting section
   local section = options.self.section:match('lualine_(.*)')
-  if section > 'c' then section = section_highlight_map[section] end
+  if section > 'c' and not active_theme.normal[section] then
+    section = section_highlight_map[section] end
   for _, mode in ipairs(modes) do
     local highlight_group_name = {options.self.section, highlight_tag, mode}
     local default_color_table = active_theme[mode] and
@@ -138,7 +140,8 @@ function M.component_format_highlight(highlight_name)
 end
 
 function M.format_highlight(is_focused, highlight_group)
-  if highlight_group > 'lualine_c' then
+  if highlight_group > 'lualine_c'
+    and not utils.highlight_exists(highlight_group .. '_normal') then
     highlight_group = 'lualine_' ..
                           section_highlight_map[highlight_group:match(
                               'lualine_(.)')]
@@ -203,11 +206,10 @@ function M.get_transitional_highlights(left_section_data, right_section_data,
     -- using string.format to convert decimal to hexadecimal
     local fg = utils.extract_highlight_colors(left_highlight_name, 'bg')
     local bg = utils.extract_highlight_colors(right_highlight_name, 'bg')
-    if not fg then fg = 'none' end
-    if not bg then bg = 'none' end
     -- swap the bg and fg when reverse is true. As in that case highlight will
     -- be placed before section
     if reverse then fg, bg = bg, fg end
+    if not fg or not bg then return '' end -- Color retrieval failed
     M.highlight(highlight_name, fg, bg)
   end
   return '%#' .. highlight_name .. '#'

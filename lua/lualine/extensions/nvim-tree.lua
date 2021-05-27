@@ -4,9 +4,7 @@ local nerdtree = require('lualine.extensions.nerdtree')
 
 local M = {}
 
-M.sections = nerdtree.sections
-
-M.inactive_sections = nerdtree.inactive_sections
+M.sections = vim.deepcopy(nerdtree.sections)
 
 M.filetypes = {'NvimTree'}
 

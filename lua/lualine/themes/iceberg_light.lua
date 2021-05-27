@@ -14,30 +14,27 @@ local colors = {
   color2   = '#c57339',
 }
 -- LuaFormatter on
-
-local iceberg = {
+return {
   replace = {
     b = {fg = colors.color0, bg = colors.color1},
-    a = {fg = colors.color0, bg = colors.color2, 'bold'}
+    a = {fg = colors.color0, bg = colors.color2, gui = 'bold'}
   },
   visual = {
     b = {fg = colors.color0, bg = colors.color1},
-    a = {fg = colors.color0, bg = colors.color5, 'bold'}
+    a = {fg = colors.color0, bg = colors.color5, gui = 'bold'}
   },
   normal = {
     b = {fg = colors.color0, bg = colors.color1},
-    a = {fg = colors.color0, bg = colors.color8, 'bold'},
+    a = {fg = colors.color0, bg = colors.color8, gui = 'bold'},
     c = {fg = colors.color9, bg = colors.color10}
   },
   inactive = {
     b = {fg = colors.color9, bg = colors.color10},
-    a = {fg = colors.color9, bg = colors.color10, 'bold'},
+    a = {fg = colors.color9, bg = colors.color10, gui = 'bold'},
     c = {fg = colors.color9, bg = colors.color10}
   },
   insert = {
     b = {fg = colors.color0, bg = colors.color1},
-    a = {fg = colors.color0, bg = colors.color11, 'bold'}
+    a = {fg = colors.color0, bg = colors.color11, gui = 'bold'}
   }
 }
-
-return iceberg
